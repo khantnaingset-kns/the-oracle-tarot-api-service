@@ -7,7 +7,7 @@ export class UserTarotRecord implements IUserTarotRecord {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 20 })
+  @Column({ type: 'varchar', length: 50 })
   userId: string;
 
   @Column({

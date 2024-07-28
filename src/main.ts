@@ -1,18 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import {
-  FastifyAdapter,
-  NestFastifyApplication,
-} from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
+import { otelSDK } from './instrumentation';
+import chalk from 'chalk';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestFastifyApplication>(
-    AppModule,
-    new FastifyAdapter({ logger: true }),
-  );
+  await otelSDK.start();
+
+  const app = await NestFactory.create(AppModule);
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Tarot Service API')
@@ -36,5 +33,10 @@ async function bootstrap() {
   );
 
   await app.listen(configService.get<number>('port'), `0.0.0.0`);
+
+  process.on('SIGTERM', async () => {
+    await Promise.all([otelSDK.shutdown(), app.close()]);
+    console.log(chalk.green('App and SDK shutdown successfully'));
+  });
 }
 bootstrap();
